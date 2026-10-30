@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { getServices } from "@/features/services/api/get-services";
 import { getProfessionals, ProfessionalWithServices } from "@/features/professionals/api/get-professionals";
 import { getAvailability } from "@/features/booking/api/get-availability";
-import { Service, TimeSlot } from "@/types";
+import { createAppointment } from "@/features/appointments/api/appointments-api";
+import { Service, TimeSlot, Appointment } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { useAuth } from "@/features/auth/context/auth-context";
 import {
@@ -18,6 +20,9 @@ import {
   ChevronLeft,
   AlertCircle,
   Sparkles,
+  CalendarCheck2,
+  ArrowRight,
+  ShieldAlert,
 } from "lucide-react";
 
 export default function BookingPage() {
@@ -39,11 +44,14 @@ export default function BookingPage() {
     new Date().toISOString().split("T")[0]
   );
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+  const [notes, setNotes] = useState<string>("");
 
-  // Estados de carga y error
+  // Estados de carga, error y resultado
   const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [bookedAppointment, setBookedAppointment] = useState<Appointment | null>(null);
 
   // Carga inicial de catálogo
   useEffect(() => {
@@ -113,7 +121,109 @@ export default function BookingPage() {
     setStep((prev) => Math.max(prev - 1, 1));
   };
 
+  const handleConfirmBooking = async () => {
+    if (!isAuthenticated) {
+      router.push(`/iniciar-sesion?redirect=/reservar`);
+      return;
+    }
+
+    if (!selectedService || !selectedSlot) return;
+
+    setIsBooking(true);
+    setErrorMessage(null);
+
+    try {
+      const result = await createAppointment({
+        serviceId: selectedService.id,
+        professionalId: selectedSlot.professionalId,
+        startAt: selectedSlot.startAt,
+        notes: notes.trim() ? notes.trim() : undefined,
+      });
+
+      setBookedAppointment(result);
+      setStep(5); // Pantalla de éxito
+    } catch (err: any) {
+      if (err?.status === 409) {
+        setErrorMessage(
+          "El horario seleccionado acaba de ser reservado por otro cliente. Por favor regresa al paso anterior y selecciona otro horario disponible."
+        );
+      } else {
+        setErrorMessage(
+          err?.detail || err?.title || "Ocurrió un error al confirmar la cita. Por favor intente de nuevo."
+        );
+      }
+    } finally {
+      setIsBooking(false);
+    }
+  };
+
   const todayStr = new Date().toISOString().split("T")[0];
+
+  // PANTALLA DE ÉXITO (Paso 5)
+  if (step === 5 && bookedAppointment) {
+    return (
+      <div className="max-w-2xl mx-auto my-10 bg-white p-8 sm:p-10 rounded-3xl border border-slate-200/90 shadow-sm text-center space-y-6">
+        <div className="h-16 w-16 bg-emerald-100 text-emerald-600 rounded-2xl mx-auto flex items-center justify-center">
+          <CheckCircle2 className="h-10 w-10" />
+        </div>
+
+        <div>
+          <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+            Reserva Confirmada Exitosamente
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-3 tracking-tight">
+            ¡Tu cita ha sido agendada!
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Hemos reservado tu espacio en el sistema. Te esperamos puntualmente.
+          </p>
+        </div>
+
+        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 text-left space-y-3 text-sm">
+          <div className="flex justify-between border-b pb-2">
+            <span className="text-slate-500">Servicio:</span>
+            <span className="font-bold text-slate-900">{selectedService?.name}</span>
+          </div>
+          <div className="flex justify-between border-b pb-2">
+            <span className="text-slate-500">Especialista:</span>
+            <span className="font-bold text-slate-900">{selectedSlot?.professionalName}</span>
+          </div>
+          <div className="flex justify-between border-b pb-2">
+            <span className="text-slate-500">Fecha y Horario:</span>
+            <span className="font-bold text-blue-600">
+              {selectedDate} ({selectedSlot?.formattedTime})
+            </span>
+          </div>
+          <div className="flex justify-between border-b pb-2">
+            <span className="text-slate-500">Total a pagar:</span>
+            <span className="font-extrabold text-slate-900">
+              {formatPrice(bookedAppointment.priceAtBooking)}
+            </span>
+          </div>
+          <div className="flex justify-between pt-1 text-xs text-slate-400">
+            <span>ID de Referencia:</span>
+            <span className="font-mono">{bookedAppointment.id.slice(0, 8)}</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+          <Link
+            href="/mi-cuenta/citas"
+            className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white font-medium px-6 py-3 rounded-xl hover:bg-blue-700 shadow-sm transition text-sm"
+          >
+            <CalendarCheck2 className="h-4 w-4" />
+            Ver Mis Citas
+          </Link>
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center border border-slate-300 bg-white text-slate-700 font-medium px-6 py-3 rounded-xl hover:bg-slate-50 transition text-sm"
+          >
+            Volver al Inicio
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -160,7 +270,17 @@ export default function BookingPage() {
       {errorMessage && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-xs px-4 py-3 rounded-xl flex items-start gap-2">
           <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-          <span>{errorMessage}</span>
+          <div className="flex-1">
+            <span>{errorMessage}</span>
+            {errorMessage.includes("acaba de ser reservado") && (
+              <button
+                onClick={() => setStep(3)}
+                className="block mt-1 font-bold text-red-800 underline"
+              >
+                Volver al selector de horarios
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -224,7 +344,6 @@ export default function BookingPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Opción cualquiera disponible */}
             <button
               onClick={() => {
                 setSelectedProfessionalId("ANY");
@@ -245,7 +364,6 @@ export default function BookingPage() {
               </p>
             </button>
 
-            {/* Profesionales específicos */}
             {professionalsForService.map((pro) => (
               <button
                 key={pro.id}
@@ -280,7 +398,7 @@ export default function BookingPage() {
         </div>
       )}
 
-      {/* PASO 3: Seleccionar Fecha y Horario (Motor de Disponibilidad) */}
+      {/* PASO 3: Seleccionar Fecha y Horario */}
       {step === 3 && selectedService && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -293,7 +411,6 @@ export default function BookingPage() {
             </div>
           </div>
 
-          {/* Selector de Fecha */}
           <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col sm:flex-row items-center gap-4">
             <label className="text-xs font-bold text-slate-700 whitespace-nowrap flex items-center gap-1.5">
               <Calendar className="h-4 w-4 text-blue-600" />
@@ -308,7 +425,6 @@ export default function BookingPage() {
             />
           </div>
 
-          {/* Grid de Horarios Calculados */}
           <div>
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
               Horarios disponibles para el {selectedDate}
@@ -418,25 +534,60 @@ export default function BookingPage() {
                   {formatPrice(selectedService.price)}
                 </span>
                 <span className="block text-[11px] text-slate-400 mt-1">
-                  Pago en recepción al momento del servicio
+                  Precio garantizado en el momento de la reserva
                 </span>
               </div>
             </div>
 
-            {!isAuthenticated && (
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs flex items-center justify-between">
-                <span>Para completar la reserva necesitas acceder o registrarte con tus datos.</span>
+            {/* Campo opcional de notas */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Instrucciones o notas adicionales (opcional):
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Ejemplo: Si es posible añadir diseño en la barba..."
+                maxLength={500}
+                rows={2}
+                className="w-full p-3 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {!isAuthenticated ? (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="h-5 w-5 text-amber-600 shrink-0" />
+                  <span>Para completar la reserva necesitas acceder o registrarte con tus datos.</span>
+                </div>
                 <button
                   onClick={() => router.push("/iniciar-sesion?redirect=/reservar")}
-                  className="bg-amber-700 hover:bg-amber-800 text-white font-semibold px-3 py-1.5 rounded-lg ml-3 text-xs"
+                  className="bg-amber-700 hover:bg-amber-800 text-white font-semibold px-4 py-2 rounded-lg text-xs whitespace-nowrap transition"
                 >
                   Iniciar Sesión
+                </button>
+              </div>
+            ) : (
+              <div className="pt-2">
+                <button
+                  disabled={isBooking}
+                  onClick={handleConfirmBooking}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl shadow-md transition flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isBooking ? (
+                    <span>Procesando reserva...</span>
+                  ) : (
+                    <>
+                      <span>Confirmar y Agendar Cita</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
                 </button>
               </div>
             )}
           </div>
 
-          <div className="pt-4 flex justify-between items-center">
+          <div className="pt-2 flex justify-between items-center">
             <button
               onClick={handlePrevStep}
               className="inline-flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900"
@@ -450,4 +601,3 @@ export default function BookingPage() {
     </div>
   );
 }
-
