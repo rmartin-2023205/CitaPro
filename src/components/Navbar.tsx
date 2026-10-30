@@ -55,6 +55,15 @@ export function Navbar() {
               )}
 
               <Link
+                href="/mi-cuenta/citas"
+                className="text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-md flex items-center gap-1 transition"
+                title="Mis Citas"
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Mis Citas</span>
+              </Link>
+
+              <Link
                 href="/mi-cuenta/perfil"
                 className="text-sm font-medium text-slate-700 hover:text-blue-600 flex items-center gap-1.5"
                 title="Mi Perfil"

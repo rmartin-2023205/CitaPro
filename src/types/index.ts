@@ -40,13 +40,22 @@ export interface Appointment {
   id: string;
   businessId: string;
   clientId: string;
+  clientName?: string;
+  clientEmail?: string;
+  clientPhone?: string;
   professionalId: string;
+  professionalName?: string;
   serviceId: string;
+  serviceName?: string;
+  durationMinutes?: number;
   startAt: string;
   endAt: string;
   status: AppointmentStatus;
   notes?: string;
   priceAtBooking: number;
+  createdAt?: string;
+  cancelledAt?: string;
+  canCancel?: boolean;
 }
 
 export interface TimeSlot {
@@ -75,4 +84,3 @@ export interface ProblemDetail {
   instance?: string;
   errors?: Record<string, string>;
 }
-
