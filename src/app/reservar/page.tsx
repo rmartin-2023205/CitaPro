@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getServices } from "@/features/services/api/get-services";
@@ -25,7 +25,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 
-export default function BookingPage() {
+function BookingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedServiceId = searchParams.get("serviceId");
@@ -599,5 +599,19 @@ export default function BookingPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function BookingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[70vh] flex items-center justify-center">
+          <div className="text-sm text-slate-500">Cargando módulo de reservas...</div>
+        </div>
+      }
+    >
+      <BookingPageContent />
+    </Suspense>
   );
 }
