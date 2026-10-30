@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   getAdminAppointments,
   getAllAdminProfessionals,
@@ -13,12 +13,7 @@ import {
 } from "@/types";
 import {
   Calendar as CalendarIcon,
-  Filter,
   Loader2,
-  CheckCircle,
-  XCircle,
-  Clock,
-  UserX,
   RefreshCw,
   Search,
 } from "lucide-react";
@@ -35,7 +30,7 @@ export default function AdminAppointmentsPage() {
   const [dateRange, setDateRange] = useState<"today" | "week" | "all">("today");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -70,11 +65,11 @@ export default function AdminAppointmentsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedProId, selectedStatus, dateRange]);
 
   useEffect(() => {
     loadData();
-  }, [selectedProId, selectedStatus, dateRange]);
+  }, [loadData]);
 
   const handleStatusChange = async (id: string, status: AppointmentStatus) => {
     try {
@@ -263,7 +258,7 @@ export default function AdminAppointmentsPage() {
                         <div className="font-semibold text-slate-900">{appt.clientName || "Cliente"}</div>
                         <div className="text-xs text-slate-500">{appt.clientPhone || appt.clientEmail}</div>
                         {appt.notes && (
-                          <div className="text-xs text-slate-400 italic mt-0.5">Nota: &quot;{appt.notes}&quot;</div>
+                          <div className="text-xs text-slate-400 italic mt-0.5">Nota: &ldquo;{appt.notes}&rdquo;</div>
                         )}
                       </td>
                       <td className="px-5 py-4 text-slate-700 font-medium whitespace-nowrap">
@@ -334,3 +329,4 @@ export default function AdminAppointmentsPage() {
     </div>
   );
 }
+

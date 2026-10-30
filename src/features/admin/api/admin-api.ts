@@ -147,3 +147,4 @@ export async function updateAppointmentStatus(
     body: JSON.stringify({ status, reason }),
   });
 }
+

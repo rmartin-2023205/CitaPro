@@ -13,7 +13,6 @@ import {
   Sparkles,
   CalendarCheck,
   AlertCircle,
-  RefreshCw,
 } from "lucide-react";
 
 // Catálogo demo de respaldo cuando el backend aún no está iniciado

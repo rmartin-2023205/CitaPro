@@ -9,11 +9,9 @@ import {
 import { Appointment, AppointmentStatus, DashboardSummary } from "@/types";
 import {
   Calendar,
-  CheckCircle2,
   Clock,
   DollarSign,
   Users,
-  Scissors,
   AlertCircle,
   RefreshCw,
   Loader2,
@@ -303,3 +301,4 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+

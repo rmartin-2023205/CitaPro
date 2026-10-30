@@ -18,7 +18,6 @@ import {
   CheckCircle2,
   UserX,
   XCircle,
-  Scissors,
   Phone,
   Mail,
   FileText,
@@ -180,6 +179,11 @@ export default function ProfessionalAgendaPage() {
       </div>
 
       {/* Pestañas de filtrado temporal */}
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          {error}
+        </div>
+      )}
       <div className="flex border-b border-slate-200 space-x-6">
         <button
           onClick={() => setActiveTab("today")}
@@ -358,3 +362,4 @@ export default function ProfessionalAgendaPage() {
     </div>
   );
 }
+
