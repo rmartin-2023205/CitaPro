@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/features/auth/context/auth-context";
-import { Calendar, User, Shield, LogOut, Scissors, LayoutDashboard } from "lucide-react";
+import { Calendar, User, Shield, LogOut, Scissors } from "lucide-react";
 
 export function Navbar() {
   const { user, isAuthenticated, logout, hasRole } = useAuth();

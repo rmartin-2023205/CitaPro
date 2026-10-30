@@ -13,7 +13,6 @@ import { useAuth } from "@/features/auth/context/auth-context";
 import {
   Calendar,
   Clock,
-  User,
   Users,
   CheckCircle2,
   ChevronRight,
@@ -29,7 +28,7 @@ function BookingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedServiceId = searchParams.get("serviceId");
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   // Estados de datos
   const [services, setServices] = useState<Service[]>([]);

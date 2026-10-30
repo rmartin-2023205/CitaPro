@@ -322,3 +322,4 @@ export default function AdminProfessionalsPage() {
     </div>
   );
 }
+

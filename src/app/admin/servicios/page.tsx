@@ -14,7 +14,6 @@ import {
   Edit2,
   Trash2,
   Loader2,
-  CheckCircle,
   X,
   AlertCircle,
 } from "lucide-react";
@@ -320,3 +319,4 @@ export default function AdminServicesPage() {
     </div>
   );
 }
+

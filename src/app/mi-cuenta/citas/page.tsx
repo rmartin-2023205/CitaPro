@@ -9,18 +9,16 @@ import { useAuth } from "@/features/auth/context/auth-context";
 import {
   Calendar,
   Clock,
-  User,
   Scissors,
   CheckCircle2,
   XCircle,
   AlertCircle,
   CalendarX2,
   Plus,
-  RefreshCw,
 } from "lucide-react";
 
 export default function MyAppointmentsPage() {
-  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"UPCOMING" | "PAST">("UPCOMING");

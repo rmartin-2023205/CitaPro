@@ -28,7 +28,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isLoading, hasRole, isAuthenticated } = useAuth();
+  const { isLoading, hasRole, isAuthenticated } = useAuth();
   const pathname = usePathname();
 
   if (isLoading) {
@@ -120,3 +120,4 @@ export default function AdminLayout({
     </div>
   );
 }
+
