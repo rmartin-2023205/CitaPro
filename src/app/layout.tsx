@@ -17,9 +17,18 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className="flex flex-col min-h-screen bg-slate-50 text-slate-900 antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg"
+        >
+          Saltar al contenido principal
+        </a>
         <Providers>
           <Navbar />
-          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <main
+            id="main-content"
+            className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8"
+          >
             {children}
           </main>
           <Footer />
@@ -28,4 +37,3 @@ export default function RootLayout({
     </html>
   );
 }
-
