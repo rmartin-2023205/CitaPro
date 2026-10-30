@@ -84,3 +84,32 @@ export interface ProblemDetail {
   instance?: string;
   errors?: Record<string, string>;
 }
+
+export interface DashboardSummary {
+  totalAppointmentsToday: number;
+  pendingAppointmentsToday: number;
+  confirmedAppointmentsToday: number;
+  completedAppointmentsToday: number;
+  cancelledAppointmentsToday: number;
+  revenueToday: number;
+  revenueMonth: number;
+  totalClients: number;
+  totalServices: number;
+  totalProfessionals: number;
+}
+
+export interface AvailabilityBlock {
+  id: string;
+  businessId: string;
+  professionalId?: string;
+  professionalName?: string;
+  startAt: string;
+  endAt: string;
+  reason?: string;
+  createdByEmail?: string;
+  createdAt?: string;
+}
+
+export interface ProfessionalWithServices extends Professional {
+  services?: Service[];
+}
