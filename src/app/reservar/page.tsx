@@ -82,7 +82,7 @@ function BookingPageContent() {
 
   // Cargar disponibilidad cuando cambian servicio, profesional o fecha
   useEffect(() => {
-    if (!selectedService || !selectedDate || step < 3) return;
+    if (!selectedService || !selectedDate || step !== 3) return;
 
     async function fetchSlots() {
       setIsLoadingSlots(true);
@@ -595,6 +595,23 @@ function BookingPageContent() {
               Cambiar horario
             </button>
           </div>
+        </div>
+      )}
+
+      {/* PASO 4 Fallback de seguridad */}
+      {step === 4 && (!selectedService || !selectedSlot) && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center space-y-4 shadow-sm">
+          <p className="text-slate-600 text-sm">
+            {!selectedService
+              ? "No has seleccionado un servicio para tu cita."
+              : "No has seleccionado un horario para tu cita."}
+          </p>
+          <button
+            onClick={() => setStep(!selectedService ? 1 : 3)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition"
+          >
+            {!selectedService ? "Seleccionar servicio" : "Volver a seleccionar horario"}
+          </button>
         </div>
       )}
     </div>
