@@ -2,7 +2,10 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { AlertTriangle, RotateCcw, Home } from "lucide-react";
+import { AlertTriangle, Home, RotateCcw } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function GlobalError({
   error,
@@ -16,37 +19,29 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <div
-      role="alert"
-      className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4"
-    >
-      <div className="w-16 h-16 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mb-6">
-        <AlertTriangle className="w-8 h-8" />
-      </div>
-      <h1 className="text-2xl font-extrabold text-slate-900 mb-2">
-        Ocurrió un problema inesperado
-      </h1>
-      <p className="text-slate-600 max-w-md mb-8 text-sm">
-        No pudimos procesar esta vista en este momento. Puedes intentar recargar la sección o regresar a la página principal.
-      </p>
-      <div className="flex flex-wrap items-center justify-center gap-3">
-        <button
-          type="button"
-          onClick={() => reset()}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 transition-colors"
-        >
-          <RotateCcw className="w-4 h-4" />
-          Intentar de nuevo
-        </button>
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold text-sm hover:bg-slate-50 transition-colors"
-        >
-          <Home className="w-4 h-4" />
-          Volver al inicio
-        </Link>
-      </div>
+    <div role="alert" className="flex min-h-screen items-center justify-center p-4">
+      <Card className="w-full max-w-md text-center">
+        <CardHeader className="items-center">
+          <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+            <AlertTriangle className="h-7 w-7" />
+          </div>
+          <CardTitle className="text-2xl">Ocurrió un problema inesperado</CardTitle>
+          <CardDescription>
+            No pudimos procesar esta vista en este momento. Puedes intentar recargar la sección o
+            regresar a la página principal.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap justify-center gap-2.5">
+          <Button onClick={() => reset()}>
+            <RotateCcw /> Intentar de nuevo
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/">
+              <Home /> Volver al inicio
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
-

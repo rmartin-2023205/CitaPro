@@ -1,12 +1,18 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { User, LoginCredentials, RegisterData, UserRole } from "../types";
 import { loginApi, registerApi, logoutApi, getMeApi } from "../api/auth-api";
 import { SESSION_EXPIRED_EVENT } from "@/lib/api-client";
 
+export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
+
 interface AuthContextType {
   user: User | null;
+  status: AuthStatus;
+  /** `true` solo durante la verificación inicial de la sesión (no durante login/logout). */
   isLoading: boolean;
   isAuthenticated: boolean;
   sessionExpired: boolean;
@@ -14,121 +20,110 @@ interface AuthContextType {
   login: (credentials: LoginCredentials) => Promise<User>;
   register: (data: RegisterData) => Promise<User>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<User | null>;
   hasRole: (role: UserRole) => boolean;
+  hasAnyRole: (roles: UserRole[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [status, setStatus] = useState<AuthStatus>("loading");
   const [sessionExpired, setSessionExpired] = useState(false);
 
-  useEffect(() => {
-    async function checkSession() {
-      try {
-        const currentUser = await getMeApi();
-        setUser(currentUser);
-      } catch {
-        // No hay sesión activa o backend desconectado
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    checkSession();
+  const applyUser = useCallback((next: User | null) => {
+    setUser(next);
+    setStatus(next ? "authenticated" : "unauthenticated");
   }, []);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const currentUser = await getMeApi();
+      applyUser(currentUser);
+      return currentUser;
+    } catch {
+      // No hay sesión activa o backend desconectado
+      applyUser(null);
+      return null;
+    }
+  }, [applyUser]);
+
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
 
   useEffect(() => {
     function handleSessionExpired() {
       setUser((prevUser) => {
         if (prevUser) {
           setSessionExpired(true);
+          toast.warning("Tu sesión ha expirado", {
+            id: "session-expired",
+            description: "Por seguridad, inicia sesión nuevamente para continuar.",
+          });
         }
         return null;
       });
+      setStatus("unauthenticated");
+      queryClient.clear();
     }
 
     window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
-    return () => {
-      window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
-    };
-  }, []);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+  }, [queryClient]);
 
-  const clearSessionExpired = () => setSessionExpired(false);
+  const clearSessionExpired = useCallback(() => setSessionExpired(false), []);
 
-  const login = async (credentials: LoginCredentials): Promise<User> => {
-    setIsLoading(true);
-    try {
+  const login = useCallback(
+    async (credentials: LoginCredentials): Promise<User> => {
       const loggedUser = await loginApi(credentials);
-      setUser(loggedUser);
+      queryClient.clear();
+      applyUser(loggedUser);
       setSessionExpired(false);
       return loggedUser;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    [applyUser, queryClient]
+  );
 
-  const register = async (data: RegisterData): Promise<User> => {
-    setIsLoading(true);
-    try {
+  const register = useCallback(
+    async (data: RegisterData): Promise<User> => {
       const registeredUser = await registerApi(data);
-      setUser(registeredUser);
+      queryClient.clear();
+      applyUser(registeredUser);
       setSessionExpired(false);
       return registeredUser;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const logout = async (): Promise<void> => {
-    setIsLoading(true);
-    try {
-      await logoutApi().catch(() => {});
-      setUser(null);
-      setSessionExpired(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const hasRole = (role: UserRole): boolean => {
-    if (!user) return false;
-    return user.roles.includes(role);
-  };
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        sessionExpired,
-        clearSessionExpired,
-        login,
-        register,
-        logout,
-        hasRole,
-      }}
-    >
-      {sessionExpired && (
-        <div
-          role="alert"
-          className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-center text-sm text-amber-900 flex items-center justify-center gap-3"
-        >
-          <span>Tu sesión ha expirado por inactividad. Por favor inicia sesión nuevamente.</span>
-          <button
-            type="button"
-            onClick={clearSessionExpired}
-            className="text-xs font-semibold underline hover:text-amber-700"
-          >
-            Cerrar aviso
-          </button>
-        </div>
-      )}
-      {children}
-    </AuthContext.Provider>
+    },
+    [applyUser, queryClient]
   );
+
+  const logout = useCallback(async (): Promise<void> => {
+    await logoutApi().catch(() => {});
+    applyUser(null);
+    setSessionExpired(false);
+    queryClient.clear();
+  }, [applyUser, queryClient]);
+
+  const value = useMemo<AuthContextType>(() => {
+    const hasRole = (role: UserRole) => !!user?.roles.includes(role);
+    return {
+      user,
+      status,
+      isLoading: status === "loading",
+      isAuthenticated: status === "authenticated" && !!user,
+      sessionExpired,
+      clearSessionExpired,
+      login,
+      register,
+      logout,
+      refreshUser,
+      hasRole,
+      hasAnyRole: (roles) => roles.some(hasRole),
+    };
+  }, [user, status, sessionExpired, clearSessionExpired, login, register, logout, refreshUser]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
