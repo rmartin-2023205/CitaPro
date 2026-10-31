@@ -1,6 +1,18 @@
 import type { ProblemDetail } from "@/types";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+
+/**
+ * Normaliza la URL base de la API:
+ * Si el usuario configuró 'https://citapro-api.onrender.com' sin '/api/v1',
+ * se agrega automáticamente para evitar errores 404/CORS.
+ */
+function normalizeBaseUrl(url: string): string {
+  const trimmed = url.trim().replace(/\/+$/, "");
+  return trimmed.endsWith("/api/v1") ? trimmed : `${trimmed}/api/v1`;
+}
+
+const BASE_URL = normalizeBaseUrl(RAW_BASE_URL);
 
 export const SESSION_EXPIRED_EVENT = "citapro:session-expired";
 
